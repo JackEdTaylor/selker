@@ -71,6 +71,10 @@ ui <- fluidPage(
       
       mainPanel(
         fluidRow(
+          column(12, h2("Estimated Parameters")),
+          column(6, uiOutput("alpha_res")),
+          column(6, uiOutput("beta_res")),
+          column(12, hr()),
           column(12, h2("Actual vs. Estimated Threshold Locations")),
           column(6, plotOutput("latent_plot")),
           column(6, plotOutput("distort_plot"))
@@ -162,6 +166,19 @@ server <- function(input, output) {
     
     # estimate a & b
     selker_optim(actual_locs, method = input$optim_method)
+  })
+  
+  # render the parameter results
+  output$alpha_res <- renderUI({
+    withMathJax(HTML(sprintf(
+      "<h1>$$\\alpha = %s$$</h1>", round(unique(opt_res()$a), 3)
+    )))
+  })
+  
+  output$beta_res <- renderUI({
+    withMathJax(HTML(sprintf(
+      "<h1>$$\\beta = %s$$</h1>", round(unique(opt_res()$b), 3)
+    )))
   })
   
   # generate plots
