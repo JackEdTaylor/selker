@@ -50,6 +50,7 @@ ui <- fluidPage(
         numericInput("n_thresh", "Number of Thresholds", value = 4, min = 2, step = 1, width = "100%"),
         div(
           uiOutput("thresh_locs_manual_ui"),
+          actionButton("randomise_manual", "Generate Random Thresholds", icon = icon("dice"), width="100%"),
           hidden(div(p("Warning: thresholds are not in order so will be re-sorted", style="color:red"), id="manual_order_warning_div")),
           id="thresh_locs_manual_div"
         ),
@@ -112,6 +113,7 @@ server <- function(input, output) {
   output$thresh_locs_manual_ui <- renderUI({
     
     req(input$n_thresh)
+    input$randomise_manual
     
     default_locs <- sort(runif(input$n_thresh, -2.5, 2.5))
     
