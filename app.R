@@ -55,14 +55,18 @@ ui <- fluidPage(
         ),
         hidden(
           div(
-            sliderInput("alpha", "Alpha", min = -5, max = 5, step = 0.01, value = 1),
-            sliderInput("beta", "Beta", min = -5, max = 5, step = 0.01, value = 0),
+            sliderInput("alpha", "Alpha", min = -5, max = 5, step = 0.01, value = 1, width="100%"),
+            sliderInput("beta", "Beta", min = -5, max = 5, step = 0.01, value = 0, width="100%"),
+            checkboxInput("add_noise", "Add random noise", value=FALSE, width="100%"),
+            hidden(div(sliderInput("noise_sigma", "SD of Random Noise", min = 0, max = 5, step = 0.01, value = 1, width="100%"), id="noise_slider_div")),
             id="thresh_locs_ab_div"
           )
         ),
         hr(),
         h4("Estimation Setup"),
-        selectInput("optim_method", "Optimisation Algorithm", choices = c("Nelder-Mead", "bobyqa"), width="100%")
+        selectInput("optim_method", "Optimisation Algorithm", choices = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "nlm", "nlminb", "bobyqa"), width="100%"),
+        hr(),
+        hidden(div(actionButton("refresh", "Refresh", icon = icon("sync"), width="100%"), id="refresh_button_div"))
       ),
       
       mainPanel(
@@ -80,14 +84,22 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
-  # show the relevant UI
+  # show/hide the relevant UIs
   observe({
     if (input$thresh_set_method == "Manually") {
       hide("thresh_locs_ab_div")
       show("thresh_locs_manual_div")
+      hide("refresh_button_div")
     } else {
       hide("thresh_locs_manual_div")
       show("thresh_locs_ab_div")
+      if (input$add_noise) {
+        show("noise_slider_div")
+        show("refresh_button_div")
+      } else {
+        hide("noise_slider_div")
+        hide("refresh_button_div")
+      }
     }
   })
   
@@ -133,13 +145,19 @@ server <- function(input, output) {
   # estimate alpha and beta
   opt_res <- reactive({
     req(input$thresh_1, input$n_thresh, input$thresh_set_method)
+    input$refresh
     
     # get desired threshold locations
     actual_locs <- if (input$thresh_set_method=="Manually") {
       manual_thresh_locs() %>%
         sort()
     } else {
-      selker_thresh(a = input$alpha, b = input$beta, n_resp = input$n_thresh+1)
+      raw_thr <- selker_thresh(a = input$alpha, b = input$beta, n_resp = input$n_thresh+1)
+      if (input$add_noise) {
+        sort(raw_thr + rnorm(length(raw_thr), 0, input$noise_sigma))
+      } else {
+        raw_thr
+      }
     }
     
     # estimate a & b
