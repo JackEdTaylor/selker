@@ -72,8 +72,9 @@ ui <- fluidPage(
       mainPanel(
         fluidRow(
           column(12, h2("Estimated Parameters")),
-          column(6, uiOutput("alpha_res")),
-          column(6, uiOutput("beta_res")),
+          column(4, uiOutput("alpha_res")),
+          column(4, uiOutput("beta_res")),
+          column(4, uiOutput("mse_res")),
           column(12, hr()),
           column(12, h2("Actual vs. Estimated Threshold Locations")),
           column(6, plotOutput("latent_plot")),
@@ -178,6 +179,12 @@ server <- function(input, output) {
   output$beta_res <- renderUI({
     withMathJax(HTML(sprintf(
       "<h1>$$\\beta = %s$$</h1>", round(unique(opt_res()$b), 3)
+    )))
+  })
+  
+  output$mse_res <- renderUI({
+    withMathJax(HTML(sprintf(
+      "<h1>$$MSE = %s$$</h1>", round(unique(opt_res()$value), 3)
     )))
   })
   
