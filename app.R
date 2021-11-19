@@ -115,7 +115,7 @@ server <- function(input, output) {
     req(input$n_thresh)
     input$randomise_manual
     
-    default_locs <- sort(runif(input$n_thresh, -2.5, 2.5))
+    default_locs <- sort(runif(input$n_thresh, -5, 5))
     
     lapply(1:input$n_thresh, function(thresh_i) {
       sliderInput(
