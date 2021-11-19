@@ -56,7 +56,7 @@ ui <- fluidPage(
         ),
         hidden(
           div(
-            sliderInput("alpha", "Alpha", min = -5, max = 5, step = 0.01, value = 1, width="100%"),
+            sliderInput("alpha", "Alpha", min = 0, max = 5, step = 0.01, value = 1, width="100%"),
             sliderInput("beta", "Beta", min = -5, max = 5, step = 0.01, value = 0, width="100%"),
             checkboxInput("add_noise", "Add random noise", value=FALSE, width="100%"),
             hidden(div(sliderInput("noise_sigma", "SD of Random Noise", min = 0, max = 5, step = 0.01, value = 1, width="100%"), id="noise_slider_div")),
