@@ -89,7 +89,7 @@ ui <- fluidPage(
           column(6, plotOutput("distort_plot", height=300)),
           column(12, hr()),
           column(12, h3("Actual vs. Estimated Response Probabilities")),
-          column(12, plotOutput("prob_plot"))
+          column(12, plotOutput("prob_plot"), height=300)
         )
       )
     )

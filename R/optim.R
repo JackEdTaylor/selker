@@ -66,7 +66,8 @@ plot_latent <- function(opt_res, dens_fun=dnorm) {
     theme(
       legend.position = "bottom",
       legend.direction = "vertical",
-      legend.margin = margin()
+      legend.margin = margin(),
+      plot.margin = margin(10, 10, 0, 0, unit="pt")
     )
 }
 
@@ -94,7 +95,8 @@ plot_distort <- function(opt_res) {
     theme(
       legend.position = "bottom",
       legend.direction = "vertical",
-      legend.margin = margin()
+      legend.margin = margin(),
+      plot.margin = margin(10, 10, 0, 0, unit="pt")
     )
 }
 
@@ -129,6 +131,10 @@ plot_probs <- function(opt_res, prob_fun=pnorm) {
       y = "Probability",
       fill = NULL
     ) +
-    theme(legend.position = "right", legend.direction = "vertical")
+    theme(
+      legend.position = "right",
+      legend.direction = "vertical",
+      plot.margin = margin(10, 0, 0, 0, unit="pt")
+    )
   
 }
