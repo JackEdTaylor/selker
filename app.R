@@ -25,17 +25,17 @@ ui <- fluidPage(
       HTML(
         "<div style=\"font-size:18px\">
     <br></br>
-    <a href=\"https://doi.org/10.3758/s13428-019-01231-3\">Selker et al. (2019)</a> present a method for describing the locations of an arbitrary number of thresholds on a normal distribution with just two parameters, \\(\\alpha\\) and \\(\\beta\\):
+    <a href=\"https://doi.org/10.3758/s13428-019-01231-3\">Selker et al. (2019)</a> present a method for describing the locations of an arbitrary number of thresholds on a distribution with just two parameters, \\(a\\) and \\(b\\):
     <ul>
-    <li>\\(\\alpha\\) describes the scale of the threshold locations, and</li>
-    <li>\\(\\beta\\) describes the degree to which the thresholds are more leftward or rightward (such that \\(\\beta\\) of 0 describes a symmetrical distribution of thresholds)</li>
+    <li>\\(a\\) describes the scale of the threshold locations, and</li>
+    <li>\\(b\\) describes the degree to which the thresholds are more leftward or rightward (such that \\(b\\) of 0 describes thresholds symmetrical across both sides of the distribution)</li>
     </ul>
     <br></br>
     Selker et al. outline a method where threshold \\(\\lambda\\)\\(_c\\) in position \\(c\\), when there are \\(C\\) ordered regions in the distributions, has a location of:
     $$ \\gamma_c = log \\left( \\frac{c/C}{1-c/C} \\right) $$
-    $$ \\lambda_c = \\alpha \\gamma_c + \\beta $$
+    $$ \\lambda_c = a \\gamma_c + b $$
     <br></br>
-    In this app, you can generate thresholds using manual locations or Selker et al.'s method, and then see how well the function can describe the locations. This is done by optimising \\(\\alpha\\) and \\(\\beta\\) to minimise MSE.
+    In this app, you can generate thresholds using manual locations or Selker et al.'s method, and then see how well the function can describe the locations. This is done by optimising \\(a\\) and \\(b\\) to minimise MSE.
     <br></br>
     Click the <b>Explore</b> tab above to have a go!
     </div>"
@@ -46,7 +46,14 @@ ui <- fluidPage(
       p("Explore", style="font-size:18px"),
       sidebarPanel(
         h4("Thresholds Setup"),
-        selectInput("thresh_set_method", "How should thresholds be specified?", choices = c("Manually", "Using Alpha & Beta"), width="100%"),
+        selectInput("dist_fun", "Latent Probability Distribution", choices = c(
+          "Normal"="norm",
+          "Logistic"="logis",
+          "Cauchy"="cauchy",
+          "Lognormal"="lnorm",
+          "Uniform"="unif"
+        ), width="100%"),
+        selectInput("thresh_set_method", "How should thresholds be specified?", choices = c("Manually", "Using a & b"), width="100%"),
         numericInput("n_thresh", "Number of Thresholds", value = 4, min = 2, step = 1, width = "100%"),
         div(
           uiOutput("thresh_locs_manual_ui"),
@@ -56,8 +63,8 @@ ui <- fluidPage(
         ),
         hidden(
           div(
-            sliderInput("alpha", "Alpha", min = 0, max = 5, step = 0.01, value = 1, width="100%"),
-            sliderInput("beta", "Beta", min = -5, max = 5, step = 0.01, value = 0, width="100%"),
+            sliderInput("a", "a", min = 0, max = 5, step = 0.01, value = 1, width="100%"),
+            sliderInput("b", "b", min = -5, max = 5, step = 0.01, value = 0, width="100%"),
             checkboxInput("add_noise", "Add random noise", value=FALSE, width="100%"),
             hidden(div(sliderInput("noise_sigma", "SD of Random Noise", min = 0, max = 5, step = 0.01, value = 1, width="100%"), id="noise_slider_div")),
             id="thresh_locs_ab_div"
@@ -65,21 +72,24 @@ ui <- fluidPage(
         ),
         hr(),
         h4("Estimation Setup"),
-        selectInput("optim_method", "Optimisation Algorithm", choices = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "nlm", "nlminb", "bobyqa"), width="100%"),
+        selectInput("optim_method", "Optimisation Algorithm", choices = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B"), width="100%"),
         hr(),
-        hidden(div(actionButton("refresh", "Refresh", icon = icon("sync"), width="100%"), id="refresh_button_div"))
+        hidden(div(actionButton("refresh", "Refresh", icon = icon("refresh"), width="100%"), id="refresh_button_div"))
       ),
       
       mainPanel(
         fluidRow(
-          column(12, h2("Estimated Parameters")),
-          column(4, uiOutput("alpha_res")),
-          column(4, uiOutput("beta_res")),
+          column(12, h3("Estimated Parameters")),
+          column(4, uiOutput("a_res")),
+          column(4, uiOutput("b_res")),
           column(4, uiOutput("mse_res")),
           column(12, hr()),
-          column(12, h2("Actual vs. Estimated Threshold Locations")),
-          column(6, plotOutput("latent_plot")),
-          column(6, plotOutput("distort_plot"))
+          column(12, h3("Actual vs. Estimated Threshold Locations")),
+          column(6, plotOutput("latent_plot", height=300)),
+          column(6, plotOutput("distort_plot", height=300)),
+          column(12, hr()),
+          column(12, h3("Actual vs. Estimated Response Probabilities")),
+          column(12, plotOutput("prob_plot"))
         )
       )
     )
@@ -149,7 +159,7 @@ server <- function(input, output) {
     }
   })
   
-  # estimate alpha and beta
+  # estimate a and b
   opt_res <- reactive({
     req(input$thresh_1, input$n_thresh, input$thresh_set_method)
     input$refresh
@@ -159,7 +169,7 @@ server <- function(input, output) {
       manual_thresh_locs() %>%
         sort()
     } else {
-      raw_thr <- selker_thresh(a = input$alpha, b = input$beta, n_resp = input$n_thresh+1)
+      raw_thr <- selker_thresh(a = input$a, b = input$b, n_resp = input$n_thresh+1)
       if (input$add_noise) {
         sort(raw_thr + rnorm(length(raw_thr), 0, input$noise_sigma))
       } else {
@@ -172,34 +182,39 @@ server <- function(input, output) {
   })
   
   # render the parameter results
-  output$alpha_res <- renderUI({
-    withMathJax(HTML(sprintf(
-      "<h1>$$\\alpha = %s$$</h1>", round(unique(opt_res()$a), 3)
-    )))
+  output$a_res <- renderUI({
+    HTML(sprintf(
+      "<center><h2>a = %s</h2></center>", round(unique(opt_res()$a), 3)
+    ))
   })
   
-  output$beta_res <- renderUI({
-    withMathJax(HTML(sprintf(
-      "<h1>$$\\beta = %s$$</h1>", round(unique(opt_res()$b), 3)
-    )))
+  output$b_res <- renderUI({
+    HTML(sprintf(
+      "<center><h2>b = %s</h2></center>", round(unique(opt_res()$b), 3)
+    ))
   })
   
   output$mse_res <- renderUI({
-    withMathJax(HTML(sprintf(
-      "<h1>$$MSE = %s$$</h1>", round(unique(opt_res()$value), 3)
-    )))
+    HTML(sprintf(
+      "<center><h2>MSE = %s</h2></center>", round(unique(opt_res()$value), 3)
+    ))
   })
   
   # generate plots
   output$latent_plot <- renderPlot({
     req(input$thresh_1, input$n_thresh, input$thresh_set_method)
-    plot_latent(opt_res())
-  })
+    plot_latent(opt_res(), dens_fun=match.fun(paste0("d", input$dist_fun)))
+  }, height = 300)
   
   output$distort_plot <- renderPlot({
     req(input$thresh_1, input$n_thresh, input$thresh_set_method)
     plot_distort(opt_res())
-  })
+  }, height = 300)
+  
+  output$prob_plot <- renderPlot({
+    req(input$thresh_1, input$n_thresh, input$thresh_set_method)
+    plot_probs(opt_res(), prob_fun=match.fun(paste0("p", input$dist_fun)))
+  }, height = 300)
   
 }
 
