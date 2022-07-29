@@ -132,7 +132,7 @@ plot_probs <- function(opt_res, prob_fun=pnorm) {
       fill = NULL
     ) +
     theme(
-      legend.position = "right",
+      legend.position = "bottom",
       legend.direction = "vertical",
       plot.margin = margin(10, 0, 0, 0, unit="pt")
     )
