@@ -8,6 +8,7 @@ You can run the app locally or remotely:
 
 * Run it locally in R, with `shiny::runGitHub(repo="selker", username="JackEdTaylor")`
 * Go to https://jackt.shinyapps.io/selker/
+* Go to https://rstudio-connect.psy.gla.ac.uk/selker/
 * Go to https://shiny.psy.gla.ac.uk/jackt/selker/
 
 ## More on the Method
